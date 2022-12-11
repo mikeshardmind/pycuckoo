@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[project]
+name = "pycuckoo"
+description = "a cuckoo filter"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.8"
+authors = [{ name = "Michael Hall", email = "michael@michaelhall.tech" }]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dynamic = ["version"]
+dependencies = [
+    "numpy",
+    "xxhash",
+]
+
+
+[project.urls]
+Homepage = "https://github.com/mikeshardmind/pycuckoo"
+
+[tool.hatch.version]
+path = "cuckoo/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/cuckoo",
+    "/LICENSE",
+]
+
+[tool.hatch.build.targets.wheel]
+include = ["/cuckoo/*"]
