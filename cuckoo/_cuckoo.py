@@ -49,66 +49,64 @@ class CuckooFilter:
         self._bucket_size = bucket_size
         self._num_swaps = num_swaps
         self._cur_size = 0
-        self.table = [_CuckooTable(size=bucket_size) for _ in range(filter_capacity)]
+        self._table = [_CuckooTable(size=bucket_size) for _ in range(filter_capacity)]
 
-    def obtain_index_from_hash(self, string_item):
+    def _obtain_index_from_hash(self, string_item):
         hash_value = xxh64_digest(string_item)
         index = int.from_bytes(hash_value, byteorder="big")
         index = index % self._filter_capacity
         return index
 
-    def get_indices_and_finger(self, string_item):
+    def _get_indices_and_finger(self, string_item):
         hash_value = xxh64_digest(string_item)
         index_1 = int.from_bytes(hash_value, byteorder="big") % self._filter_capacity
         int_finger = int.from_bytes(hash_value, byteorder="big")
         index_2 = (
-            index_1 ^ self.obtain_index_from_hash(hash_value)
+            index_1 ^ self._obtain_index_from_hash(hash_value)
         ) % self._filter_capacity
         return index_1, index_2, int_finger
 
-    def add(self, item_to_insert):
-        if not isinstance(item_to_insert, str):
-            raise TypeError("Expected a string, got a %s" % type(item_to_insert))
+    def add(self, item_to_insert: str):
 
-        index_1, index_2, finger = self.get_indices_and_finger(item_to_insert)
-        if self.table[index_1].insert(finger):
+        index_1, index_2, finger = self._get_indices_and_finger(item_to_insert)
+        if self._table[index_1].insert(finger):
             self._cur_size += 1
             return index_1
 
-        if self.table[index_2].insert(finger):
+        if self._table[index_2].insert(finger):
             self._cur_size += 1
             return index_2
 
         random_index = random.choice((index_1, index_2))
 
-        for swap in range(self._num_swaps):
-            finger = self.table[random_index].swap_fingerprints(finger)
+        for _ in range(self._num_swaps):
+            finger = self._table[random_index].swap_fingerprints(finger)
 
-            random_index = random_index ^ self.obtain_index_from_hash(finger)
+            random_index = random_index ^ self._obtain_index_from_hash(finger)
             random_index = random_index % self._filter_capacity
 
-            if self.table[random_index].insert(finger):
+            if self._table[random_index].insert(finger):
                 self._cur_size += 1
                 return random_index
 
         raise RuntimeError("We're full")
 
-    def remove(self, item_to_remove):
-        index_1, index_2, finger = self.get_indices_and_finger(item_to_remove)
+    def remove(self, item_to_remove: str):
+        index_1, index_2, finger = self._get_indices_and_finger(item_to_remove)
 
-        if self.table[index_1].remove(finger):
+        if self._table[index_1].remove(finger):
             self._cur_size -= 1
             return True
 
-        if self.table[index_2].remove(finger):
+        if self._table[index_2].remove(finger):
             self.cuckoo_size -= 1
             return True
 
         return False
 
-    def __contains__(self, item_to_test):
-        index_1, index_2, finger = self.get_indices_and_finger(item_to_test)
-        return finger in self.table[index_1] or finger in self.table[index_2]
+    def __contains__(self, item_to_test: str) -> bool:
+        index_1, index_2, finger = self._get_indices_and_finger(item_to_test)
+        return finger in self._table[index_1] or finger in self._table[index_2]
 
-    def get_load(self):
+    def get_load(self) -> float:
         return self._cur_size / (self._filter_capacity * self._bucket_size)
